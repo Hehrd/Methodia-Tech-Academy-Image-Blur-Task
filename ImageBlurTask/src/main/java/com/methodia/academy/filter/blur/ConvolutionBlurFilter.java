@@ -1,17 +1,20 @@
-package com.methodia.academy.filter;
+package com.methodia.academy.filter.blur;
+
+import com.methodia.academy.filter.FilterDefinition;
+import com.methodia.academy.filter.ImageFilter;
 
 import java.awt.image.BufferedImage;
 
-import static java.lang.Double.sum;
 import static java.lang.Math.clamp;
 
-abstract class ConvolutionBlurFilter implements BlurFilter {
+abstract class ConvolutionBlurFilter extends ImageFilter {
     private final double[][] kernel;
     private final double kernelWeight;
     private final int kernelCenterX;
     private final int kernelCenterY;
 
-    protected ConvolutionBlurFilter(double[][] kernel) {
+    protected ConvolutionBlurFilter(FilterDefinition<? extends ImageFilter> filterDefinition, double[][] kernel) {
+        super(filterDefinition);
         this.kernel = copyKernel(kernel);
         this.kernelWeight = getKernelWeight(kernel);
         this.kernelCenterY = kernel.length / 2;
@@ -19,7 +22,7 @@ abstract class ConvolutionBlurFilter implements BlurFilter {
     }
 
     @Override
-    public void applyBlur(BufferedImage image) {
+    public BufferedImage apply(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
         int[] sourcePixels = image.getRGB(0, 0, width, height, null, 0, width);
@@ -32,6 +35,7 @@ abstract class ConvolutionBlurFilter implements BlurFilter {
         }
 
         image.setRGB(0, 0, width, height, resultPixels, 0, width);
+        return image;
     }
 
     private int getConvolutedColor(int[] pixels, int width, int height, int centerX, int centerY) {

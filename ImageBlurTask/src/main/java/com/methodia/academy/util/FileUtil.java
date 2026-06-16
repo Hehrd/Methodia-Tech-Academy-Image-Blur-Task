@@ -3,6 +3,8 @@ package com.methodia.academy.util;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import javax.imageio.ImageIO;
 
 public class FileUtil {
@@ -15,6 +17,9 @@ public class FileUtil {
     }
 
     public static BufferedImage readImage(String filePath) {
+        if (isHttpUrl(filePath)) {
+            return readImageFromUrl(filePath);
+        }
         try {
             BufferedImage image = ImageIO.read(readFile(filePath));
             if (image == null) {
@@ -23,6 +28,20 @@ public class FileUtil {
             return image;
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read image: " + filePath, e);
+        }
+    }
+
+    private static BufferedImage readImageFromUrl(String filePath) {
+        try (InputStream inputStream = URI.create(filePath).toURL().openStream()) {
+            BufferedImage image = ImageIO.read(inputStream);
+            if (image == null) {
+                throw new IllegalArgumentException("Unsupported image format: " + filePath);
+            }
+            return image;
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to read image: " + filePath, e);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid URL: " + filePath, e);
         }
     }
 
@@ -37,11 +56,15 @@ public class FileUtil {
         }
     }
 
-    private static String extractFormat(String outputPath) {
+    public static String extractFormat(String outputPath) {
         int dotIndex = outputPath.lastIndexOf('.');
         if (dotIndex < 0 || dotIndex == outputPath.length() - 1) {
             throw new IllegalArgumentException("Output file must have an extension: " + outputPath);
         }
         return outputPath.substring(dotIndex + 1);
+    }
+
+    public static boolean isHttpUrl(String path) {
+        return path.startsWith("http://") || path.startsWith("https://");
     }
 }

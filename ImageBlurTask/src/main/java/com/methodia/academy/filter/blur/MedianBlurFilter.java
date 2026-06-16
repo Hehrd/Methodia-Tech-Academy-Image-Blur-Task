@@ -1,9 +1,19 @@
-package com.methodia.academy.filter;
+package com.methodia.academy.filter.blur;
+
+import com.methodia.academy.filter.FilterDefinition;
+import com.methodia.academy.filter.ImageFilter;
 
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.List;
 
-public class MedianBlurFilter implements BlurFilter {
+public class MedianBlurFilter extends ImageFilter {
+    private static final FilterDefinition<MedianBlurFilter> FILTER_DEFINITION =
+            new FilterDefinition<>(
+                    "medianblur",
+                    List.of(FilterDefinition.positiveInt("radius")),
+                    arguments -> new MedianBlurFilter((Integer) arguments.getFirst())
+            );
     private static final int DEFAULT_RADIUS = 5;
     private static final int COLOR_RANGE = 256;
 
@@ -15,6 +25,7 @@ public class MedianBlurFilter implements BlurFilter {
     }
 
     public MedianBlurFilter(int radius) {
+        super(FILTER_DEFINITION);
         if (radius < 1) {
             throw new IllegalArgumentException("Radius must be at least 1");
         }
@@ -22,8 +33,11 @@ public class MedianBlurFilter implements BlurFilter {
         this.buffer = new Buffer();
     }
 
-    @Override
-    public void applyBlur(BufferedImage image) {
+    public static FilterDefinition<MedianBlurFilter> getDefinition() {
+        return FILTER_DEFINITION;
+    }
+
+    public BufferedImage apply(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
         int[] sourcePixels = image.getRGB(0, 0, width, height, null, 0, width);
@@ -36,6 +50,7 @@ public class MedianBlurFilter implements BlurFilter {
         }
 
         image.setRGB(0, 0, width, height, resultPixels, 0, width);
+        return image;
     }
 
     private int getMedianColor(int[] pixels, int width, int height, int centerX, int centerY) {
@@ -83,6 +98,7 @@ public class MedianBlurFilter implements BlurFilter {
         }
         throw new IllegalStateException("Unable to determine median color");
     }
+
 
     private record Buffer(int[] redHistogram, int[] greenHistogram, int[] blueHistogram, int[] alphaHistogram) {
         private Buffer() {
